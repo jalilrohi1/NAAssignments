@@ -124,6 +124,8 @@ def main(dataset: str, verbose: bool):
     ax1.set_ylabel("# of Nodes")
     plt.show()
 
+    #TODO: add more graphs about centrality and other metrics
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", type=str, help="dataset file", default="../inf-italy-osm/inf-italy-osm-cleaned.edges")

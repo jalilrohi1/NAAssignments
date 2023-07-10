@@ -8,6 +8,62 @@ def check_continue(color_map):
         return True
     return False
 
+def update_timelist(timelist):
+    return [x+1 if x != None else None for x in timelist]
+
+#returns red nodes indexes
+def get_I_nodes(color_map):
+    lst = []
+    x = 0
+    for node in color_map:
+        if node == 'red':
+            lst.append(x)
+        x+=1
+    return lst
+
+def check_recovery(color_map, G, node_list, timelist, d, q, lb):
+    #get all nodes with timelist > d
+    R_valid = []
+    for x in range(G.number_of_nodes()):
+        if timelist[x] != None:
+            if timelist[x] > d:
+                R_valid.append(True)
+            else:
+                R_valid.append(False)
+        else:
+            R_valid.append(False)
+    print("R valid: ", R_valid)
+    #for each marked node: flip coin with probability q
+    for x in range(G.number_of_nodes()):
+        r = random.uniform(0.0, 1.0)
+        if R_valid[x] and r <= q:
+            print(node_list[x])
+            color_map[x] = 'g'
+            nx.set_node_attributes(G, {node_list[x]:{'labels':"R"}})
+            lb = nx.get_node_attributes(G, 'labels')
+            timelist[x] = None
+    return lb
+    
+
+def check_spreading(color_map, G, node_list, p, lb):
+    I_nodes = get_I_nodes(color_map)
+    print("red nodes indexes: ", I_nodes)
+    for index in I_nodes:
+        node = list(G.nodes)[index]
+        neighbors = [n for n in G.neighbors(node)]
+        #TODO: filter R neighbors
+        print(neighbors)
+        for n in neighbors:
+            r = random.uniform(0.0, 1.0)
+            if r <= p:
+                index_n = node_list.index(n)
+                if color_map[index_n] != 'g' and color_map[index_n] != 'red':
+                    timelist[index_n] = 0
+                    color_map[index_n] = 'red'
+                    nx.set_node_attributes(G, {n:{'labels':"I"}})
+                    lb = nx.get_node_attributes(G, 'labels')
+    return lb
+
 G = nx.Graph()
 G.add_edge(3, 4)
 G.add_edge(1, 2)
@@ -28,9 +84,11 @@ options = {
     "linewidths": 5,
     "width": 5,
 }
+timelist = np.full(5, None)
 print(list(G.nodes()))
 rr = random.randrange(5)
 chosen = list(G.nodes)[rr]
+timelist[rr] = 0
 print("chosen: ", chosen)
 print("index: ", rr)
 
@@ -42,15 +100,13 @@ ax.margins(0.20)
 plt.axis("off")
 plt.show()
 
-color_map = []
-for node in G: color_map.append('blue')
-
+node_list = list(G.nodes())
 num_nodes = G.number_of_nodes()
-labels=[]
+color_map = np.full(num_nodes, 'blue')
+labels= "S"
 nx.set_node_attributes(G, labels, "labels")
-labels.append("S")
 lb = nx.get_node_attributes(G, 'labels')
-    
+
 nx.draw(G, pos, alpha=1, width=0.3, labels=lb, node_size=3000, node_color=color_map, font_size=36)
 plt.show()
 
@@ -61,57 +117,14 @@ lb = nx.get_node_attributes(G, 'labels')
 nx.draw(G, pos, alpha=1, width=0.3, labels=lb, node_size=3000, node_color=color_map, font_size=36)
 plt.show()
 
-timelist = np.full(5, None)
-print(timelist)
-
-def update_timelist(timelist):
-    #for all not None values -> +1
-    return
-
-#returns red nodes indexes
-def get_I_nodes(color_map):
-    lst = []
-    x = 0
-    for node in color_map:
-        if node == 'red':
-            lst.append(x)
-        x+=1
-    return lst
-
-def check_recovery(color_map, G, d, q):
-    #get all nodes with timelist > d
-    #for each marked node: flip coin with probability q
-    #if q -> color_map to green, label to R
-    get_I_nodes(color_map)
-    return
-
-def check_spreading(color_map, G, p):
-    #get all red nodes neighbors
-    #for each marked node: flip coin with probability p
-    #if p -> color_map to red, label to I
-    I_nodes = get_I_nodes(color_map)
-    print("red nodes indexes: ", I_nodes)
-    for index in I_nodes:
-        node = list(G.nodes)[index]
-        neighbors = [n for n in G.neighbors(node)]
-        print(neighbors)
-        for n in neighbors:
-            r = random.uniform(0.0, 1.0)
-            if r <= p:
-                color_map[n] = 'red' #can go out of bound, TO FIX
-                nx.set_node_attributes(G, {list(G.nodes)[n]:{'labels':"I"}})
-
-#TODO: create dictionary of node - color_map_index
-
-d = 4
-q = 0.3
-p = 0.4
+d = 3
+q = 0.7
+p = 0.8
 
 #loop
 while(check_continue(color_map)):
-    update_timelist(timelist)
-    check_recovery(color_map, G, d, q)
-    check_spreading(color_map, G, p)
-    lb = nx.get_node_attributes(G, 'labels')
+    timelist = update_timelist(timelist)
+    lb = check_recovery(color_map, G, node_list, timelist, d, q, lb)
+    lb = check_spreading(color_map, G, node_list, p, lb)
     nx.draw(G, pos, alpha=1, width=0.3, labels=lb, node_size=3000, node_color=color_map, font_size=36)
     plt.show()
