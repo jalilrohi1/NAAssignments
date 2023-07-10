@@ -3,9 +3,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import logging
 import numpy as np
+from scipy.interpolate import make_interp_spline
 from tabulate import tabulate
-
-
 
 """
 basic metrics:
@@ -33,7 +32,7 @@ def append_ten(lst_source, lst_dest):   #append first ten elements in source to 
     for x in range(10):
         lst_dest.append(lst_source[x])
 
-def main(verbose: bool):
+def main(dataset: str, verbose: bool):
     if verbose:
         logging.basicConfig(level=logging.INFO)
 
@@ -46,7 +45,7 @@ def main(verbose: bool):
     top_triangles = []
 
     print("Opening dataset...")
-    f = open("../inf-italy-osm/inf-italy-osm-cleaned.edges", "r")
+    f = open(dataset, "r")
     G = nx.read_weighted_edgelist(f, nodetype=int)
     f.close()
 
@@ -67,6 +66,12 @@ def main(verbose: bool):
     values.append(avg_degree)
     dg = sorted(G.degree, key=lambda x: x[1], reverse=True)
     append_ten(dg, top_degree)
+
+    #TODO: try
+    #get nodes and degrees paired
+    #X_Y_Spline = make_interp_spline(nodes, degrees)
+    #X_ = np.linspace(nodes.min(), nodes.max(), 500)
+    #Y_ = X_Y_Spline(X_)
 
     logging.info("Calculating centrality...")
     centrality = nx.degree_centrality(G)
@@ -121,9 +126,10 @@ def main(verbose: bool):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("-f", type=str, help="dataset file", default="../inf-italy-osm/inf-italy-osm-cleaned.edges")
     parser.add_argument("-v", action='store_true')
     cli_args = parser.parse_args()
-    main(cli_args.v)
+    main(cli_args.f, cli_args.v)
 
 """
 TODO:
