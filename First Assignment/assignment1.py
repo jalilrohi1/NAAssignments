@@ -46,7 +46,7 @@ def main(dataset: str, verbose: bool):
 
     print("Opening dataset...")
     f = open(dataset, "r")
-    G = nx.read_weighted_edgelist(f, nodetype=int)
+    G = nx.read_edgelist(f, nodetype=int)
     f.close()
 
     print("Calculating metrics...")
@@ -66,12 +66,6 @@ def main(dataset: str, verbose: bool):
     values.append(avg_degree)
     dg = sorted(G.degree, key=lambda x: x[1], reverse=True)
     append_ten(dg, top_degree)
-
-    #TODO: try
-    #get nodes and degrees paired
-    #X_Y_Spline = make_interp_spline(nodes, degrees)
-    #X_ = np.linspace(nodes.min(), nodes.max(), 500)
-    #Y_ = X_Y_Spline(X_)
 
     logging.info("Calculating centrality...")
     centrality = nx.degree_centrality(G)
@@ -129,6 +123,7 @@ def main(dataset: str, verbose: bool):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", type=str, help="dataset file", default="../inf-italy-osm/inf-italy-osm-cleaned.edges")
+    #TODO: add plottable flag like in assignment2.py
     parser.add_argument("-v", action='store_true')
     cli_args = parser.parse_args()
     main(cli_args.f, cli_args.v)

@@ -1,0 +1,11 @@
+about the code:
+- code can probably use some refactoring
+- some options are commented because with the enormous dataset it is supposed to use those functions are never going to finish,
+    for in example the diameter or even basic plotting of the graph
+- due to the "extreme" values of the graph, plots about certain metrics like the degree distribution are going to be weird
+    or at least not very "pleasantly looking"
+- some plots are still missing and will be added as soon as the main part of the remaining assignments will be done
+- final conclusion about the graph being scale-free or not is left to discussion, it is not random due to the degree distribution
+    but the wannabe-hubs are that "big" as one could imagine in a graph as big as this one, probably because of the physical limitations
+    of the infrastracture network (there can be only so many roads/airports/ports)
+- some extra comments can be added if needed

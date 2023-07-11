@@ -1,0 +1,10 @@
+tmp_dummy3.py: temporary file with very simple network of 5 nodes, used for initial testing of functions
+tmp3.py: temporary file for the testing of the functions from tmp_dummy3.py on generated/real datasets as the exercise requires
+assignment3.py: where the real assignment will be done once the functions have been properly tested
+
+about the code:
+- removing nodes can isolate some nodes, working on the giant component when calculating the metrics at each step is fundamental
+    because networkx algorithms like diameter don't work on unconnected graphs
+- important metrics like diameter, size of giant component and others will be calculated at each step
+- probably going to introduce a loop with better structured functions for both removal of nodes and printing of metrics
+- also need to add plots to better display the evolution of the graph
