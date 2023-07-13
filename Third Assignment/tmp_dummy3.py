@@ -4,6 +4,7 @@ import random
 import argparse
 import numpy as np
 import logging
+from dataclasses import dataclass, field
 
 def open_dataset(dataset):
     print("Opening dataset...")
@@ -34,12 +35,16 @@ def dummy_dataset():
     }
     return G, pos, options
 
-def remove_random_node(G):
+def remove_random_nodes(G, chunk):
     node_list = list(G.nodes())
-    rr = random.randrange(min(node_list), max(node_list))
-    if G.has_node(rr):
-        print("node selected: ", rr)
-        G.remove_node(rr)
+    if len(node_list) > chunk: rr = random.sample(node_list, k=chunk)
+    for node in rr:
+        G.remove_node(node)
+    print("nodes removed")
+    #else: rr = node_list[0]
+    #if G.has_node(rr):  #TODO: while(!G.has_node(-1)) to create loop until a node is found
+     #   print("node selected: ", rr)
+      #  G.remove_node(rr)
 
 def remove_highest_degree_node(G):
     dg = sorted(G.degree, key=lambda x: x[1], reverse=True)
@@ -58,11 +63,11 @@ def get_metrics(G):
     #cc = max(nx.connected_components(G), key=len)
     print("Size of Giant Component: ", len(G))
     print("diameter: ", nx.diameter(G))
-    #TODO: more metrics: avg_centrality, avg_degree, number_of_edges, 
+    #TODO: more metrics: avg_centrality, avg_degree, number_of_edges
 
-def remr(G, pos, options):
+def remr(G, pos, options, chunk):
     print("Removing random node...")
-    remove_random_node(G)
+    remove_random_nodes(G, chunk)
     print("nodes: ", list(G.nodes()))
     plot_dummy(G, pos, options)
 
@@ -72,16 +77,50 @@ def get_giant_component(G):
     return subG
     #return [G.subgraph(c).copy for c in nx.connected_components(G)]
 
+@dataclass
+class GraphMetrics:
+    """Class for keeping track of the changes in the graph as the attacks follow"""
+    size_of_GC: list = field(default_factory=list)
+    edges: list = field(default_factory=list)
+    diameter: list = field(default_factory=list)
+    degree_distribution: list = field(default_factory=list)
+    avg_centrality: list = field(default_factory=list)
+
+    def add_new_cycle(self, soGC, edges, diam, dd, avcen): #node removed, new metrics are stored
+        self.size_of_GC.append(soGC)
+        self.edges.append(edges)
+        self.diameter.append(diam)
+        self.degree_distribution.append(dd)
+        self.avg_centrality.append(avcen)
+
+def get_avg_degree(G):
+    return sum([d for n, d in G.degree()])/G.number_of_nodes()
+
+def get_avg_centrality(G):
+    return sum(nx.degree_centrality(G).values())/G.number_of_nodes()
+
+def get_avg_betweenness(G):
+    return sum(nx.betweenness_centrality(G).values())/G.number_of_nodes()
+
+def get_avg_closeness(G):
+    return sum(nx.closeness_centrality(G).values())/G.number_of_nodes()
+
 def tmp():
+    #inputs required: dataset, percentage_of_nodes
+    percentage = 0.1
     logging.basicConfig(level=logging.INFO)
     
     dataset = "../tech-pgp/tech-pgp.edges"
+    #dataset = "../tech-routers-rf/tech-routers-rf.mtx"
     G = open_dataset(dataset)
-    
-    G, pos, options = dummy_dataset()
-    print("nodes: ", list(G.nodes()))
-    plot_dummy(G, pos, options)
-    print("diameter: ", nx.diameter(G))
+    chunk = int(percentage*len(G.nodes()))
+    print("nodes: ", G.number_of_nodes())
+    print("edges: ", G.number_of_edges())
+    print("chunk: ", chunk)
+    #G, pos, options = dummy_dataset()
+    #print("nodes: ", list(G.nodes()))
+    #plot_dummy(G, pos, options)
+    #print("diameter: ", nx.diameter(G))
     """
     remr(G, pos, options)
     subG = get_giant_component(G)
@@ -98,12 +137,39 @@ def tmp():
     plot_dummy(G, pos, options)
 
     """
-    G.remove_node(3)
-    G.remove_node(1)
-    G.remove_node(4)
-    subG = get_giant_component(G)
-    get_metrics(subG)
-    plot_dummy(G, pos, options)
+    #subG = get_giant_component(G)
+    #get_metrics(subG)
+    #plot_dummy(G, pos, options)
     #print(max(nx.connected_components(G), key=len))
 
+    #loop for graph size for each attack
+    #attacks: random, target (node degree?), betweenness, closeness, pagerank
+    graph_size = G.number_of_nodes()
+    R = G.copy() #graph for random attacks
+    T = G.copy() #graph for target attacks
+    B = G.copy() #graph for betweenness attacks
+    C = G.copy() #graph for closeness attacks
+    P = G.copy() #graph for pagerank attacks
+
+    #random, target, betweenness, closeness, pagerank
+    list_GM  = [GraphMetrics(), GraphMetrics(), GraphMetrics(), GraphMetrics(), GraphMetrics()] 
+    intervals = []
+    num_steps = int(graph_size/chunk)-1
+    print("num steps:", num_steps)
+    for x in range(num_steps): #leave some nodes remaining
+        print(x)
+        remove_random_nodes(R, chunk)
+        subRGM = get_giant_component(R)
+        #remove_highest_degree_node(T)
+        #subTGM = get_giant_component(T)
+        list_GM[0].add_new_cycle(len(subRGM), R.number_of_edges(), nx.diameter(subRGM), get_avg_degree(R), get_avg_centrality(R))
+        #list_GM[1].add_new_cycle(len(subTGM), T.number_of_edges(), nx.diameter(subTGM), get_avg_degree(T), get_avg_centrality(T))
+        intervals.append(chunk*x)
+    
+    plt.plot(intervals, list_GM[0].diameter, marker='o')
+    plt.xlabel("Nodes removed")
+    plt.ylabel("Diameter")
+    plt.title("Evolution of diameter")
+    plt.tight_layout()
+    plt.show()
 tmp()

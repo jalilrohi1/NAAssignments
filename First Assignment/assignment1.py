@@ -119,6 +119,15 @@ def main(dataset: str, verbose: bool):
     plt.show()
 
     #TODO: add more graphs about centrality and other metrics
+    
+    degree_counts = np.bincount(degree_sequence)
+    degrees = np.arange(len(degree_counts))
+    plt.plot(degrees, degree_counts, 'r-')
+    plt.xlabel('Degree')
+    plt.ylabel('Number of nodes')
+    plt.title('Degree Distribution')
+    plt.grid(True)
+    plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
