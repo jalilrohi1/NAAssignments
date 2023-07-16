@@ -13,7 +13,6 @@ def open_dataset(dataset):
     f.close()
     return G
 
-
 def main():
     logging.basicConfig(level=logging.INFO)
     
@@ -26,4 +25,5 @@ if __name__ == "__main__":
     parser.add_argument("-plot", action='store_true')
     parser.add_argument("-v", action='store_true')
     cli_args = parser.parse_args()
-    main(cli_args.f, cli_args.p, cli_args.d, cli_args.q, cli_args.i, cli_args.plot, cli_args.v)
+    #main(cli_args.f, cli_args.p, cli_args.d, cli_args.q, cli_args.i, cli_args.plot, cli_args.v)
+    main()
