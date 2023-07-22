@@ -4,19 +4,20 @@ import random
 import argparse
 import numpy as np
 import logging
+import os
 
-#loop control
-def check_continue(color_map):
+def check_continue(color_map:list):
+    """Loop control"""
     if 'red' in color_map:
         return True
     return False
 
-#if node is infected the timelist value goes up
-def update_timelist(timelist):
+def update_timelist(timelist:list):
+    """Updates the time for infected nodes"""
     return [x+1 if x != None else None for x in timelist]
 
-#returns red nodes indexes
-def get_I_nodes(color_map):
+def get_I_nodes(color_map:list):
+    """Returns indexes of infected nodes"""
     lst = []
     x = 0
     for node in color_map:
@@ -25,8 +26,8 @@ def get_I_nodes(color_map):
         x+=1
     return lst
 
-def check_recovery(color_map, G, node_list, timelist, d, q, lb):
-    #get all nodes with timelist > d
+def check_recovery(color_map:list, G:nx.Graph, node_list:list, timelist:list, d:int, q:float, lb:list):
+    """Simulates recovery process"""
     logging.info("Calculating nodes that can move to R..")
     R_valid = []
     for x in range(G.number_of_nodes()):
@@ -51,7 +52,8 @@ def check_recovery(color_map, G, node_list, timelist, d, q, lb):
     return lb
     
 
-def check_spreading(color_map, G, node_list, timelist, p, lb):
+def check_spreading(color_map:list, G:nx.Graph, node_list:list, timelist:list, p:float, lb:list):
+    """Simulates spreading of infection"""
     I_nodes = get_I_nodes(color_map)
     logging.info("Red nodes indexes: %s", I_nodes)
     for index in I_nodes:
@@ -70,9 +72,10 @@ def check_spreading(color_map, G, node_list, timelist, p, lb):
                     lb = nx.get_node_attributes(G, 'labels')
     return lb
 
-def main(dataset: str, p: float, d: int, q: float, i: int, plot: bool, verbose: bool):
+def main(dataset:str, output_dir:str, p:float, d:int, q:float, i:int, verbose:bool):
     if verbose:
         logging.basicConfig(level=logging.INFO)
+
     print("Opening dataset...")
     f = open(dataset, "r")
     G = nx.read_edgelist(f, nodetype=int)
@@ -80,10 +83,7 @@ def main(dataset: str, p: float, d: int, q: float, i: int, plot: bool, verbose: 
     f.close()
 
     num_nodes = G.number_of_nodes()
-    print(G.number_of_nodes())
-    print(G.number_of_edges())
-    if plot:
-        pos = nx.spring_layout(G)
+    pos = nx.spring_layout(G)
     timelist = np.full(num_nodes, None)
     node_list = list(G.nodes())
     color_map = np.full(num_nodes, 'blue')
@@ -91,10 +91,13 @@ def main(dataset: str, p: float, d: int, q: float, i: int, plot: bool, verbose: 
     nx.set_node_attributes(G, labels, "labels")
     lb = nx.get_node_attributes(G, 'labels')
 
-    if plot:
-        print("Drawing initial graph...")
-        nx.draw(G, pos, alpha=0.4, width=0.3, labels=lb, node_size=25, node_color=color_map, font_size=3)
-        plt.show()
+    if not os.path.exists(output_dir): os.mkdir(output_dir)
+
+    print("Drawing initial graph...")
+    fig = plt.figure()
+    nx.draw(G, pos, alpha=0.4, width=0.3, labels=lb, node_size=25, node_color=color_map, font_size=3)
+    fig.savefig(output_dir+"step0.png")
+    plt.close(fig)
 
     print("Infecting chosen nodes...")
     chosen = []
@@ -108,12 +111,13 @@ def main(dataset: str, p: float, d: int, q: float, i: int, plot: bool, verbose: 
     
     logging.info("Chosen nodes: %s", chosen)
     
-    if plot:
-        nx.draw(G, pos, alpha=0.4, width=0.3, labels=lb, node_size=25, node_color=color_map, font_size=3)
-        plt.show()
+    print("First infection...")
+    fig = plt.figure()
+    nx.draw(G, pos, alpha=0.4, width=0.3, labels=lb, node_size=25, node_color=color_map, font_size=3)
+    fig.savefig(output_dir+"step1.png")
+    plt.close(fig)
 
     #loops until all nodes are green or blue
-    #comment the drawing and plotting if the graph is too big
     print("Beginning SIR iterations...")
     iterations = 0
     while(check_continue(color_map)):
@@ -121,20 +125,22 @@ def main(dataset: str, p: float, d: int, q: float, i: int, plot: bool, verbose: 
         timelist = update_timelist(timelist)
         lb = check_recovery(color_map, G, node_list, timelist, d, q, lb)
         lb = check_spreading(color_map, G, node_list, timelist, p, lb)
-        if plot:
-            nx.draw(G, pos, alpha=0.4, width=0.3, labels=lb, node_size=25, node_color=color_map, font_size=3)
-            plt.show()
+        fig = plt.figure()
+        nx.draw(G, pos, alpha=0.4, width=0.3, labels=lb, node_size=25, node_color=color_map, font_size=3)
+        step = "step"+str(iterations+1)+".png"
+        fig.savefig(output_dir+step)
+        plt.close(fig)
 
     print("SIR model completed in ", iterations, " iterations")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", type=str, help="dataset file", default="../inf-italy-osm/inf-italy-osm-cleaned.edges")
+    parser.add_argument("-f", type=str, help="dataset file", default="../tech-routers-rf/tech-routers-rf.mtx")
+    parser.add_argument("-o", type=str, help="output directory", default="outputs/")
     parser.add_argument("-p", type=float, help="transmission probability", default=0.4)
     parser.add_argument("-d", type=int, help="duration of the infection", default=4)
     parser.add_argument("-q", type=float, help="recovery probability", default=0.3)
     parser.add_argument("-i", type=int, help="individuals initially infected", default=5)
-    parser.add_argument("-plot", action='store_true')
-    parser.add_argument("-v", action='store_true')
+    parser.add_argument("-v", help="verbose output", action='store_true')
     cli_args = parser.parse_args()
-    main(cli_args.f, cli_args.p, cli_args.d, cli_args.q, cli_args.i, cli_args.plot, cli_args.v)
+    main(cli_args.f, cli_args.o,cli_args.p, cli_args.d, cli_args.q, cli_args.i, cli_args.v)

@@ -1,11 +1,2 @@
-tmp.py: temporary file with the test code for the real assignment, to be removed
-assignment2.py: real assignment file
-
-about the code:
-- some refactoring could be done
-- function parameters choice could be improved, there might be inconsistency in the choises made
-- some extra comments will be added to explain all the steps in the SRI model
-- works on all datasets excluding the inf-italy-osm.edges
-- extra plots will be added as soon as the core assignment3.py is finished
-- an animation made from each step in the SRI diffusion model applied on the new dataset is required and it will be done
-    and uploaded on github
+the script parameters can be set through command line arguments
+by default it will save the plots in the ouputs/ directory
