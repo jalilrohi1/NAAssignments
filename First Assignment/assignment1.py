@@ -91,10 +91,10 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
 
     logging.info("Calculating degrees...")
     degree_sequence = sorted((d for n, d in G.degree()), reverse=True)
-    values.append(max(degree_sequence))
     values.append(min(degree_sequence))
     avg_degree = sum(degree_sequence)/G.number_of_nodes()
     values.append(avg_degree)
+    values.append(max(degree_sequence))
     dg = sorted(G.degree, key=lambda x: x[1], reverse=True)
     append_ten(dg, top_degree)
 
