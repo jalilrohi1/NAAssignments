@@ -82,8 +82,12 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
     values.append(G.number_of_nodes())
     logging.info("Calculating edges...")
     values.append(G.number_of_edges())
-    logging.info("Calculating lower bound diameter...")
-    values.append(nx.approximation.diameter(G))
+    if full:
+        logging.info("Calculating diameter...")
+        values.append(nx.diameter(G))
+    else:
+        logging.info("Calculating lower bound diameter...")
+        values.append(nx.approximation.diameter(G))
 
     logging.info("Calculating degrees...")
     degree_sequence = sorted((d for n, d in G.degree()), reverse=True)
