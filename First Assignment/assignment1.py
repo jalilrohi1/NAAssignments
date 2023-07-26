@@ -6,6 +6,7 @@ import numpy as np
 from tabulate import tabulate
 import pandas as pd
 import os
+import math
 
 def open_dataset(dataset:str) -> nx.Graph:
     """Loads dataset from path"""
@@ -52,6 +53,23 @@ def save_metrics_alt(values:list, metrics:list[str], output_dir:str, name:str):
     table.auto_set_column_width(col=list(range(len(metrics))))
     fig.savefig(output_dir+name, bbox_inches="tight", pad_inches=0.5)
 
+def k_probability(num_degree:list, num_nodes:int) -> list:
+    """Returns list with the probability of each node degree"""
+    res = []
+    for x in range(len(num_degree)):
+        res.append(num_degree[x]/num_nodes)
+    return res
+
+def power_law_fitting(degrees, k_prob:list):
+    """Returns a list with the values of parameter a to the corresponding node degree"""
+    p_law = []
+    d_law = []
+    for x in range(len(k_prob)):
+        v = 1.0/k_prob[x]
+        if degrees[x] != 1:
+            p_law.append(math.log(v, float(degrees[x])))
+            d_law.append(degrees[x])
+    return p_law, d_law
 
 def main(dataset:str, output_dir:str, full:bool, verbose:bool):
     if verbose:
@@ -155,11 +173,13 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
     #degree histogram
     fig = plt.figure()
     ax1 = plt.subplot()
-    ax1.bar(*np.unique(degree_sequence, return_counts=True))
+    amounts = np.unique(degree_sequence, return_counts=True)
+    ax1.bar(*amounts)
     ax1.set_title("Degree histogram")
     ax1.set_xlabel("Degree")
     ax1.set_ylabel("# of Nodes")
     fig.savefig(output_dir+"degree-histogram.png")
+    plt.close(fig)
 
     #degree distribution
     fig = plt.figure()
@@ -170,6 +190,18 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
     plt.ylabel('Number of nodes')
     plt.title('Degree Distribution')
     fig.savefig(output_dir+"degree-distribution.png")
+    plt.close(fig)
+
+    #alpha-value for each degree (excluding 1)
+    fig = plt.figure()
+    k_prob = k_probability(amounts[1], G.number_of_nodes())
+    p_law, d_law = power_law_fitting(amounts[0], k_prob)
+    plt.plot(d_law, p_law, 'g-')
+    plt.xlabel('Degree')
+    plt.ylabel('Value of alpha')
+    plt.title('p(k) = 1/k^a')
+    fig.savefig(output_dir+"power-law-fitting.png")
+    plt.close(fig)
 
     #metrics table
     save_metrics(values[0:4], metrics[0:4], output_dir, "metrics-1.png")
@@ -179,24 +211,24 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
     save_metrics(values[13:16], metrics[13:16], output_dir, "metrics-5.png")
     if full:
         save_metrics(values[16:], metrics[16:], output_dir, "metrics-6.png")
+    #top 10 nodes for specific metrics    
+    df = pd.DataFrame(data={'Nodes-Degree': [x[0] for x in top_degree], 'Degree': [y[1] for y in top_degree]})
+    if verbose: print("\n", df)
+    save_metrics_alt(df.values, df.columns, output_dir, "top10-degree.png")
+    df = pd.DataFrame(data={'Nodes-Centrality': [x[0] for x in top_centrality], 'Centrality': [y[1] for y in top_centrality]})
+    if verbose: print("\n", df)
+    save_metrics_alt(df.values, df.columns, output_dir, "top10-centrality.png")
+    df = pd.DataFrame(data={'Nodes-Triangles': [x[0] for x in top_triangles], 'Triangles': [y[1] for y in top_triangles]})
+    if verbose: print("\n", df)
+    save_metrics_alt(df.values, df.columns, output_dir, "top10-triangles.png")
 
     if full:
-        d = {'Nodes-Degree': [x[0] for x in top_degree], 'Degree': [y[1] for y in top_degree], 
-            'Nodes-Centrality': [x[0] for x in top_centrality], 'Centrality': [y[1] for y in top_centrality],
-            'Nodes-Triangles': [x[0] for x in top_triangles], 'Triangles': [y[1] for y in top_triangles],
-            'Nodes-Betweenness': [x[0] for x in top_betweenness], 'Betweenness': [y[1] for y in top_betweenness],
-            'Nodes-Closeness': [x[0] for x in top_closeness], 'Closeness': [y[1] for y in top_closeness]}
-        df = pd.DataFrame(data=d)
-
-    else:
-        d = {'Nodes-Degree': [x[0] for x in top_degree], 'Degree': [y[1] for y in top_degree], 
-            'Nodes-Centrality': [x[0] for x in top_centrality], 'Centrality': [y[1] for y in top_centrality],
-            'Nodes-Triangles': [x[0] for x in top_triangles], 'Triangles': [y[1] for y in top_triangles]}
-        df = pd.DataFrame(data=d)
-
-    #top 10 nodes for specific metrics    
-    if verbose: print("\n", df)
-    save_metrics_alt(df.values, df.columns, output_dir, "top10-nodes.png")
+        df = pd.DataFrame(data={'Nodes-Betweenness': [x[0] for x in top_betweenness], 'Betweenness': [y[1] for y in top_betweenness]})
+        if verbose: print("\n", df)
+        save_metrics_alt(df.values, df.columns, output_dir, "top10-betweenness.png")
+        df = pd.DataFrame(data={'Nodes-Closeness': [x[0] for x in top_closeness], 'Closeness': [y[1] for y in top_closeness]})
+        if verbose: print("\n", df)
+        save_metrics_alt(df.values, df.columns, output_dir, "top10-closeness.png")
         
 
 if __name__ == "__main__":
