@@ -58,12 +58,12 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
         logging.basicConfig(level=logging.INFO)
 
     if full:
-        metrics = ["Number of nodes", "Number of edges", "Diameter", "Minimum Degree", "Average degree", "Highest Degree", 
+        metrics = ["Number of nodes", "Number of edges", "Connected", "Diameter", "Minimum Degree", "Average degree", "Highest Degree", 
             "Average Centrality", "Top Centrality", "Transitivity", "Average Number of Triangles", "Highest Number of Triangles", 
             "Density", "K-Core", "K-Core Minimum Degree", "Assortativity", "Average Betweenness", "Top Betweenness", 
             "Average Closeness", "Top Closeness"]
     else:
-        metrics = ["Number of nodes", "Number of edges", "Lowerbound Diameter", "Minimum Degree", "Average degree", "Highest Degree", 
+        metrics = ["Number of nodes", "Number of edges", "Connected", "Lowerbound Diameter", "Minimum Degree", "Average degree", "Highest Degree", 
             "Average Centrality", "Top Centrality", "Transitivity", "Average Number of Triangles", "Highest Number of Triangles", 
             "Density", "K-Core", "K-Core Minimum Degree", "Assortativity"]
         
@@ -82,6 +82,9 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
     values.append(G.number_of_nodes())
     logging.info("Calculating edges...")
     values.append(G.number_of_edges())
+    logging.info("Checking if connected...")
+    values.append(nx.is_connected(G))
+
     if full:
         logging.info("Calculating diameter...")
         values.append(nx.diameter(G))
@@ -169,13 +172,13 @@ def main(dataset:str, output_dir:str, full:bool, verbose:bool):
     fig.savefig(output_dir+"degree-distribution.png")
 
     #metrics table
-    save_metrics(values[0:3], metrics[0:3], output_dir, "metrics-1.png")
-    save_metrics(values[3:6], metrics[3:6], output_dir, "metrics-2.png")
-    save_metrics(values[6:9], metrics[6:9], output_dir, "metrics-3.png")
-    save_metrics(values[9:12], metrics[9:12], output_dir, "metrics-4.png")
-    save_metrics(values[12:15], metrics[12:15], output_dir, "metrics-5.png")
+    save_metrics(values[0:4], metrics[0:4], output_dir, "metrics-1.png")
+    save_metrics(values[4:7], metrics[4:7], output_dir, "metrics-2.png")
+    save_metrics(values[7:10], metrics[7:10], output_dir, "metrics-3.png")
+    save_metrics(values[10:13], metrics[10:13], output_dir, "metrics-4.png")
+    save_metrics(values[13:16], metrics[13:16], output_dir, "metrics-5.png")
     if full:
-        save_metrics(values[15:], metrics[15:], output_dir, "metrics-6.png")
+        save_metrics(values[16:], metrics[16:], output_dir, "metrics-6.png")
 
     if full:
         d = {'Nodes-Degree': [x[0] for x in top_degree], 'Degree': [y[1] for y in top_degree], 
