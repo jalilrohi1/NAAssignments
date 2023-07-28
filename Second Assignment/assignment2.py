@@ -83,7 +83,7 @@ def main(dataset:str, output_dir:str, p:float, d:int, q:float, i:int, verbose:bo
     f.close()
 
     num_nodes = G.number_of_nodes()
-    pos = nx.spring_layout(G)
+    pos = nx.spring_layout(G, seed=420)
     timelist = np.full(num_nodes, None)
     node_list = list(G.nodes())
     color_map = np.full(num_nodes, 'blue')
